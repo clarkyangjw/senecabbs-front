@@ -1,32 +1,45 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, Fragment } from 'react';
 import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
 
+import {Container, Grid } from '@mui/material';
+import Header from './components/Header'
+import Footer from './components/Footer'
 
 import Home from './pages/Home'
+
 const Login = lazy(() => import('./pages/Login'))
 const Register = lazy(() => import('./pages/Register'))
 
 function App() {
   return (
-    <Router>
-      <Suspense fallback={<div className="route-loading">loading...</div>}>
-        <div className="App">
 
+    <dev className="App">
+      <Router>
+        <Container maxWidth="false">
+          <Container fixed>
+              <Header/>
+          </Container>
 
+          <Container fixed>
+            <Suspense fallback={<div className="route-loading">loading...</div>}>
+                <Switch>
+                  <Route exact path="/" component={Home}/>
 
-          <Switch>
-            {/* 配置默认跳转到home的路由 */}
-            <Route exact path="/" render={()=> <Redirect to="/home"/>}/>
-            <Route path="/home" component={Home}/>
+                  <Route path="/login" component={Login}/>
+                  <Route path="/register" component={Register}/>
 
-            <Route path="/login" component={Login}/>
-            <Route path="/register" component={Register}/>
+                  <Redirect to="/"/>
+                </Switch>
+            </Suspense>
+          </Container>
 
-            <Redirect to="/home"/>
-          </Switch>
-        </div>
-      </Suspense>
-    </Router>
+          <Container fixed>
+              <Footer/>
+          </Container>
+        </Container>
+      </Router>
+    </dev>
+    
   );
 }
 
