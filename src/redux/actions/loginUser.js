@@ -1,12 +1,12 @@
-import {ADD_LOGIN_USER} from '../constant'
+import {ADD_USER_INFO} from '../../utils/constant'
 
 //创建增加一个人的action动作对象
-export const addLoginUser = loginUserObj => ({type:ADD_LOGIN_USER,data:loginUserObj})
+export const addUserInfo = userInfoObj => ({type:ADD_USER_INFO,data:userInfoObj})
 
-export const addLoginUserAsync = (data) => {
+export const addUserInfoAsync = (data) => {
 	return (dispatch)=>{
 		setTimeout(()=>{
-			dispatch(addLoginUser(data))
+			dispatch(addUserInfo(data))
 		},500)
 	}
 }

@@ -1,29 +1,42 @@
 import React, { Component } from 'react'
 import { Link } from 'react-router-dom'
+import {connect} from 'react-redux'
+import {addUserInfo} from '../../redux/actions/loginUser'
 
-import Avatar from '@mui/material/Avatar';
+// import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
 import TextField from '@mui/material/TextField';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
+// import FormControlLabel from '@mui/material/FormControlLabel';
+// import Checkbox from '@mui/material/Checkbox';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import Card from '@mui/material/Card';
+import Alert from '@mui/material/Alert';
+// import CardMedia from '@mui/material/CardMedia';
+// import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-import axios from 'axios'
-import {BASE_URL} from '../../utils/url'
+
+import { API } from '../../utils/api'
+import { UUID } from '../../utils/uuid'
 
 const theme = createTheme();
 
-export default class Login extends Component{
+class Login extends Component{
   state = {
-    email:'',
-    password:'',
     captcha: '',
+    username:'',
+    password:'',
+    key:'',
+    code:'',
+    error:'',
+  }
+
+  addUserInfo = (userInfoObj) =>{
+    this.props.addUserInfo(userInfoObj)
   }
 
   saveFormData = (dataType) => {
@@ -32,26 +45,61 @@ export default class Login extends Component{
     }
   }
 
-  handleSubmit = (event) => {
+  handleSubmit = async (event) => {
+    // console.log(event)
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
+    //  const data = new FormData(event.currentTarget);
     // eslint-disable-next-line no-console
 
-    // console.log({
-    //   email: data.get('email'),
-    //   password: data.get('password'),
-    // });
+    const result = await API.post('/api/auth/anno/login',{
+      username: this.state.username,
+      password: this.state.password,
+      key: this.state.key,
+      code: this.state.code
+    })
+    // console.log(result)
+    // console.log(this.props)
+    const {isSuccess, data} = result.data
+    if(isSuccess === true){
+      this.addUserInfo(data)
+      // console.log(this.props)
+      // console.log(this.props.location.state.from.pathname)
+      if(this.props.location.state === undefined){
+        this.props.history.replace("/")
+      }else{
+        this.props.history.replace(this.props.location.state.from.pathname)
+      }
+    }
+    else{
+      this.setState({
+        password:'',
+        code:'',
+        error: result.data.msg
+      })
+      this.refreshCaptcha()
+      
+    }
     
   };
 
-  // async componentDidMount(){
-  //   const result = await axios.get(`${BASE_URL}/api/auth/anno/captcha`)
-  //   console.log(result)
-  //   this.setState({
-  //     captcha: result
-  //   })
+  async refreshCaptcha(){
+    let uuid = UUID()
+    this.setState({key:uuid})
+    const result = await API.get('/api/auth/anno/captcha',{
+      params:{
+        key: uuid,
+      },
+      responseType: 'arraybuffer'
+    })
+    // console.log(result)
+    this.setState({
+      captcha: result.data
+    })
+  }
 
-  // }
+  async componentDidMount(){
+    this.refreshCaptcha()
+  }
 
   render(){
     return (
@@ -66,19 +114,22 @@ export default class Login extends Component{
               alignItems: 'center',
             }}
           >
-            <Typography component="h1" variant="h5">
+            <Typography component="h1" variant="h5" sx={{ mt: 1, mb: 3}}>
               Sign in to Seneca BBS
             </Typography>
+            <Card elevation={0} sx={{height: 50, mt: 1}} >
+              {this.state.error === ""? "":<Alert severity="error">{this.state.error}</Alert>}
+            </Card>
             <Box component="form" onSubmit={this.handleSubmit} noValidate sx={{ mt: 1 }}>
               <TextField
-                onChange={this.saveFormData('email')}
+                onChange={this.saveFormData('username')}
                 margin="normal"
                 required
                 fullWidth
-                id="email"
-                label="Email Address"
-                name="email"
-                autoComplete="email"
+                id="username"
+                label="Username"
+                name="username"
+                value={this.state.username}
                 autoFocus
               />
               <TextField
@@ -90,29 +141,30 @@ export default class Login extends Component{
                 label="Password"
                 type="password"
                 id="password"
+                value={this.state.password}
                 autoComplete="current-password"
               />
-              {/* <Grid container spacing={2}>
-                <Grid item sm={6}>
-                <Button variant="text">
-                  
-                </Button>
+              <Grid container spacing={2} sx={{ mt: 1 }}>
+                <Grid item xs={12} sm={4}>
+                  <img src={`data:image/png;base64,${btoa(new Uint8Array(this.state.captcha).reduce((data, byte) => data + String.fromCharCode(byte), ''))}`} alt="Verify code"/>
                 </Grid>
-                <Grid item sm={6}>
+                <Grid item xs={12} sm={8}>
                   <TextField
+                    onChange={this.saveFormData('code')}
                     required
                     fullWidth
-                    id="lastName"
-                    label="Last Name"
-                    name="lastName"
-                    autoComplete="family-name"
+                    id="code"
+                    label="Verify Code"
+                    name="code"
+                    value={this.state.code}
                   />
                 </Grid>
-              </Grid> */}
-              <FormControlLabel
+              </Grid>
+              {/* <FormControlLabel
+                sx={{ mt: 1 }}
                 control={<Checkbox value="remember" color="primary" />}
                 label="Remember me"
-              />
+              /> */}
               <Button
                 type="submit"
                 fullWidth
@@ -123,12 +175,12 @@ export default class Login extends Component{
               </Button>
               <Grid container>
                 <Grid item xs>
-                  <Link to="/forgetPassword">
+                  <Link to="/account/forgetPassword">
                     Forgot password?
                   </Link>
                 </Grid>
                 <Grid item>
-                  <Link to="/register">
+                  <Link to="/account/register">
                     {"Don't have an account? Sign Up"}
                   </Link>
                 </Grid>
@@ -141,3 +193,11 @@ export default class Login extends Component{
   }
   
 }
+
+
+export default connect(
+  state => ({
+    userInfo: state.userInfo
+  }),
+  {addUserInfo}
+)(Login)

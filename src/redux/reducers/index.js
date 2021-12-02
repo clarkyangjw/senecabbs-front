@@ -1,5 +1,5 @@
 import {combineReducers} from 'redux'
-import loginUser from './person'
+import userInfo from './userInfo'
 export default  combineReducers({
-	loginUser,
+	userInfo,
 })
